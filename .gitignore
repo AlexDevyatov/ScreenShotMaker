@@ -1,0 +1,18 @@
+# Скриншоты и артефакты
+screenshots/
+*.png
+screenshots.zip
+
+# APK (пользовательские)
+*.apk
+
+# Локальные настройки и кэш
+.env
+*.log
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
