@@ -4,8 +4,8 @@
 
 set -e
 
-# Таймаут ожидания загрузки эмулятора (секунды)
-EMU_BOOT_TIMEOUT=60
+# Таймаут ожидания загрузки эмулятора (секунды; без KVM загрузка дольше)
+EMU_BOOT_TIMEOUT=120
 # Таймаут ожидания после ребута по локали
 REBOOT_TIMEOUT=90
 # Задержка после запуска приложения перед скриншотом (секунды)
@@ -79,11 +79,13 @@ cleanup() {
 trap cleanup EXIT
 
 # Запуск эмулятора в фоне без GUI
+# -no-modem избегает ошибки "address resolution failed for ::1" в Docker без IPv6
 echo "Starting emulator (no window, no audio)..."
 emulator -avd "$AVD_NAME" \
     -no-window \
     -no-audio \
     -no-boot-anim \
+    -no-modem \
     -gpu swiftshader_indirect \
     -no-snapshot-load \
     -wipe-data \

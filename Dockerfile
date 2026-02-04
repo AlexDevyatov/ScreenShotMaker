@@ -81,6 +81,9 @@ RUN mkdir -p /root/.android/avd/Pixel_5_API_33.avd && \
     echo "hw.gpu.mode=auto" >> /root/.android/avd/Pixel_5_API_33.ini && \
     echo "hw.gpu.enabled=yes" >> /root/.android/avd/Pixel_5_API_33.ini
 
+# IPv6 localhost для эмулятора (иначе "address resolution failed for ::1" — modem device)
+RUN grep -q '^::1' /etc/hosts || echo '::1 localhost ip6-localhost ip6-loopback' >> /etc/hosts
+
 # Папка для скриншотов внутри контейнера
 RUN mkdir -p /screenshots
 
