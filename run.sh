@@ -80,13 +80,14 @@ trap cleanup EXIT
 
 # Запуск эмулятора в фоне без GUI
 # -no-modem избегает ошибки "address resolution failed for ::1" в Docker без IPv6
+# -gpu auto: с KVM даёт ускорение; без KVM откатится на swiftshader (медленно)
 echo "Starting emulator (no window, no audio)..."
 emulator -avd "$AVD_NAME" \
     -no-window \
     -no-audio \
     -no-boot-anim \
     -no-modem \
-    -gpu swiftshader_indirect \
+    -gpu auto \
     -no-snapshot-load \
     -wipe-data \
     -no-sim \

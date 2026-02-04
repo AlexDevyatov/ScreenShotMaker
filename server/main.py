@@ -41,7 +41,8 @@ def run_screenshot_job(job_id: str, apk_path: Path, out_dir: Path) -> None:
             "-e", "SCREENSHOTS_DIR=/screenshots",
             IMAGE_NAME,
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(PROJECT_ROOT))
+        # Без KVM эмулятор с 3 локалями и перезагрузками может работать 15–25 мин
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800, cwd=str(PROJECT_ROOT))
         if result.returncode == 0:
             status_file.write_text("done")
         else:
@@ -49,7 +50,7 @@ def run_screenshot_job(job_id: str, apk_path: Path, out_dir: Path) -> None:
             status_file.write_text("failed")
     except subprocess.TimeoutExpired:
         status_file.write_text("failed")
-        error_file.write_text("Timeout (10 min)")
+        error_file.write_text("Timeout (30 min). Без KVM попробуйте сервер с большими ресурсами или включите KVM.")
     except Exception as e:
         status_file.write_text("failed")
         error_file.write_text(str(e))
