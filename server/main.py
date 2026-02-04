@@ -73,9 +73,21 @@ async def upload_apk(background_tasks: BackgroundTasks, file: UploadFile = File(
     return JSONResponse(content={"job_id": job_id})
 
 
+LOCALE_FILES = ["main_ru.png", "main_en.png", "main_es.png"]
+
+def _completed_locales(job_dir: Path) -> list[str]:
+    """Список локалей, для которых скриншот уже готов (файл есть и не пустой)."""
+    out = []
+    for f in LOCALE_FILES:
+        p = job_dir / f
+        if p.exists() and p.stat().st_size > 0:
+            out.append(f.replace("main_", "").replace(".png", ""))
+    return out
+
+
 @api.get("/jobs/{job_id}/status")
 async def job_status(job_id: str):
-    """Статус задачи: pending, running, done, failed."""
+    """Статус задачи: pending, running, done, failed. completed — список готовых локалей (ru, en, es)."""
     job_dir = JOBS_DIR / job_id
     if not job_dir.is_dir():
         raise HTTPException(status_code=404, detail="Job not found")
@@ -87,7 +99,13 @@ async def job_status(job_id: str):
     error = ""
     if status == "failed" and (job_dir / "error.txt").exists():
         error = (job_dir / "error.txt").read_text()
-    return JSONResponse(content={"job_id": job_id, "status": status, "error": error})
+    completed = _completed_locales(job_dir)
+    return JSONResponse(content={
+        "job_id": job_id,
+        "status": status,
+        "error": error,
+        "completed": completed,
+    })
 
 
 @api.get("/jobs/{job_id}/result")
