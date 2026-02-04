@@ -69,8 +69,8 @@ RUN wget -q "https://dl.google.com/android/repository/emulator-linux_x64-${EMULA
 RUN sdkmanager --sdk_root=${ANDROID_HOME} "system-images;android-33;google_apis;x86_64"
 
 # Создание AVD: Pixel 5, Android 33, Google APIs x86_64
-# --sdk_root указывается после действия create avd, иначе avdmanager выдаёт ошибку
-RUN echo "no" | avdmanager create avd --sdk_root=${ANDROID_HOME} \
+# avdmanager использует ANDROID_HOME из ENV, флаг --sdk_root не поддерживается в create avd
+RUN echo "no" | avdmanager create avd \
     -n "Pixel_5_API_33" \
     -k "system-images;android-33;google_apis;x86_64" \
     -d "pixel_5" \
