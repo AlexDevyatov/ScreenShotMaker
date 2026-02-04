@@ -16,3 +16,9 @@ screenshots.zip
 # IDE
 .idea/
 *.iml
+
+# Server
+.venv/
+uploads/
+jobs/
+server/__pycache__/

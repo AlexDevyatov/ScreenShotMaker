@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenshotMaker — скриншоты приложения по локалям</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161a22;
+      --border: #2a3142;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #6ee7b7;
+      --accent-dim: #3fb381;
+      --danger: #f87171;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    h1 {
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 600;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, #5eead4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+    #dropzone {
+      width: 100%;
+      max-width: 420px;
+      min-height: 200px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    #dropzone:hover, #dropzone.dragover {
+      border-color: var(--accent-dim);
+      background: rgba(62, 179, 129, 0.06);
+    }
+    #dropzone .icon {
+      font-size: 48px;
+      opacity: 0.7;
+    }
+    #dropzone p { margin: 0; color: var(--muted); text-align: center; }
+    #dropzone strong { color: var(--accent); }
+    #fileInput { display: none; }
+    #status {
+      margin-top: 24px;
+      min-height: 24px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    #status.error { color: var(--danger); }
+    #status.success { color: var(--accent); }
+    .progress {
+      width: 100%;
+      max-width: 420px;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 16px;
+      display: none;
+    }
+    .progress.visible { display: block; }
+    .progress bar {
+      display: block;
+      height: 100%;
+      width: 30%;
+      background: var(--accent);
+      border-radius: 3px;
+      animation: indeterminate 1.2s ease-in-out infinite;
+    }
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+    #result {
+      margin-top: 24px;
+      max-width: 520px;
+      width: 100%;
+      display: none;
+    }
+    #result.visible { display: block; }
+    #result h3 { font-size: 1rem; margin-bottom: 12px; color: var(--muted); }
+    .previews {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .previews a {
+      display: block;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .previews img {
+      width: 100%;
+      height: auto;
+      vertical-align: top;
+    }
+    .previews span {
+      display: block;
+      padding: 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .download-zip {
+      margin-top: 16px;
+      padding: 12px 20px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    .download-zip:hover { background: var(--accent-dim); }
+  </style>
+</head>
+<body>
+  <h1>ScreenshotMaker</h1>
+  <p class="sub">Скриншоты главного экрана приложения на ru, en, es</p>
+
+  <div id="dropzone">
+    <span class="icon">📱</span>
+    <p><strong>Перетащите APK сюда</strong> или нажмите для выбора</p>
+    <p style="font-size: 0.8rem;">.apk</p>
+    <input type="file" id="fileInput" accept=".apk">
+  </div>
+
+  <div class="progress" id="progress"><bar></bar></div>
+  <div id="status"></div>
+  <div id="result">
+    <h3>Готово</h3>
+    <div class="previews" id="previews"></div>
+    <button type="button" class="download-zip" id="downloadZip">Скачать screenshots.zip</button>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const status = document.getElementById('status');
+    const progress = document.getElementById('progress');
+    const result = document.getElementById('result');
+    const previews = document.getElementById('previews');
+    const downloadZip = document.getElementById('downloadZip');
+
+    function setStatus(msg, type = '') {
+      status.textContent = msg;
+      status.className = 'visible' + (type ? ' ' + type : '');
+    }
+
+    function setProgress(show) {
+      progress.classList.toggle('visible', !!show);
+      result.classList.toggle('visible', false);
+    }
+
+    function showResult(jobId) {
+      const base = '/api/jobs/' + jobId;
+      previews.innerHTML = [
+        { file: 'main_ru.png', label: 'RU' },
+        { file: 'main_en.png', label: 'EN' },
+        { file: 'main_es.png', label: 'ES' }
+      ].map(({ file, label }) =>
+        '<a href="' + base + '/files/' + file + '" target="_blank" download>' +
+        '<img src="' + base + '/files/' + file + '" alt="' + label + '">' +
+        '<span>' + label + '</span></a>'
+      ).join('');
+      downloadZip.onclick = () => { window.location.href = base + '/result'; };
+      result.classList.add('visible');
+      setProgress(false);
+      setStatus('Скриншоты готовы.', 'success');
+    }
+
+    async function pollStatus(jobId) {
+      for (let i = 0; i < 300; i++) {
+        const r = await fetch('/api/jobs/' + jobId + '/status');
+        const data = await r.json();
+        if (data.status === 'done') {
+          showResult(jobId);
+          return;
+        }
+        if (data.status === 'failed') {
+          setStatus('Ошибка: ' + (data.error || 'unknown'), 'error');
+          setProgress(false);
+          return;
+        }
+        setStatus('Генерация скриншотов… ' + (data.status === 'running' ? 'эмулятор' : 'ожидание'));
+        await new Promise(ok => setTimeout(ok, 2000));
+      }
+      setStatus('Таймаут.', 'error');
+      setProgress(false);
+    }
+
+    async function upload(file) {
+      if (!file || !file.name.toLowerCase().endsWith('.apk')) {
+        setStatus('Выберите файл .apk', 'error');
+        return;
+      }
+      setStatus('Загрузка…');
+      setProgress(true);
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const r = await fetch('/api/upload', { method: 'POST', body: form });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.detail || r.statusText);
+        }
+        const { job_id } = await r.json();
+        setStatus('Задача создана, запуск эмулятора…');
+        await pollStatus(job_id);
+      } catch (e) {
+        setStatus('Ошибка: ' + e.message, 'error');
+        setProgress(false);
+      }
+    }
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      if (f) upload(f);
+    });
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f) upload(f);
+    });
+  </script>
+</body>
+</html>

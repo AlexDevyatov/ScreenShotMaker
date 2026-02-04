@@ -90,10 +90,34 @@ chmod +x build-and-run.sh
 | `SCREENSHOTS_DIR` | `/screenshots`      | Каталог для сохранения PNG. |
 | `AVD_NAME`      | `Pixel_5_API_34`       | Имя AVD. |
 
+## Веб-интерфейс
+
+Запуск веб-сервера (APK через drag & drop):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r server/requirements.txt
+.venv/bin/uvicorn server.main:app --host 0.0.0.0 --port 8080
+```
+
+Откройте в браузере `http://localhost:8080`, перетащите APK в зону загрузки. После завершения можно скачать скриншоты или архив.
+
+## Развёртывание на сервере
+
+На удалённом Linux-сервере (Ubuntu/Debian):
+
+```bash
+git clone <repo> && cd ScreenshotMaker
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Скрипт установит Docker, Python, зависимости, соберёт образ и запустит systemd-сервис. Сервис будет доступен на порту **8080** (переменная `APP_PORT`). Подробности — в комментариях в `deploy.sh`.
+
 ## Ограничения
 
 - Поддерживается только **Android** (iOS не поддерживается).
-- Режим работы — **только CLI** (без веб- или GUI-интерфейса).
+- Локально доступен и **CLI**, и **веб-интерфейс**.
 - Снимается только **стартовый экран** приложения (без сценариев логина, свайпов и т.п.).
 - Главная Activity определяется из манифеста APK (launcher-activity); если её нет, используется `monkey` для запуска пакета.
 
